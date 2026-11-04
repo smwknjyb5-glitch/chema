@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>محاكاة التركيب الكيميائي للماء</title>
+<style>
+:root{--bg:#f3f8fb;--card:#fff;--tx:#12303f;--mut:#5b7685;--bd:#d5e3ea;--pri:#0b7fab;--ok:#1a8f4d;--wr:#c27a00;--no:#c0392b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a21;--card:#16262f;--tx:#e6f1f6;--mut:#9ab3c0;--bd:#27414e;--pri:#4cc2ee;--ok:#4cd488;--wr:#f0b24a;--no:#ff7b6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.7}
+.w{max-width:1000px;margin:auto;padding:14px}
+h1{font-size:1.5rem;margin:8px 0;color:var(--pri)}
+h2{font-size:1.1rem;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.g{grid-template-columns:1fr}}
+.pre{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;border:1px solid var(--pri);background:transparent;color:var(--pri);border-radius:20px;padding:5px 12px;cursor:pointer}
+button.on,button:hover{background:var(--pri);color:#fff}
+.sl{display:grid;grid-template-columns:90px 1fr 70px;align-items:center;gap:8px;margin:4px 0;font-size:.92rem}
+.sl b{display:flex;align-items:center;gap:5px}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+input[type=range]{width:100%}
+canvas{width:100%;max-width:340px;display:block;margin:auto;border-radius:10px}
+.k{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.k div{background:var(--bg);border-radius:10px;padding:8px}
+.k span{display:block;font-size:1.25rem;font-weight:700;color:var(--pri)}
+.k small{color:var(--mut)}
+.tag{display:inline-block;padding:2px 10px;border-radius:12px;color:#fff;font-weight:700}
+.bar{height:16px;border-radius:8px;overflow:hidden;display:flex;background:var(--bg);margin:4px 0}
+.bar i{display:block;height:100%}
+.row{display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed var(--bd);align-items:flex-start}
+.row:last-child{border:0}
+.ic{font-size:1.2rem;min-width:24px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+td,th{padding:6px;border-bottom:1px solid var(--bd);text-align:right;vertical-align:top}
+th{color:var(--mut)}
+.note{color:var(--mut);font-size:.82rem}
+.wrapx{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>💧 محاكاة التركيب الكيميائي للماء</h1>
+<p class="note">اختر نوع الماء أو عدّل تركيز الشوارد (ملغ/لتر) وشاهد العُسر الكلي والمعدنية وما يناسب كل فئة. القيم النموذجية تقريبية لأغراض تعليمية.</p>
+
+<div class="card"><h2>اختر نوع الماء</h2><div class="pre" id="pre"></div></div>
+
+<div class="g">
+<div class="card"><h2>تركيز الشوارد (ملغ/لتر)</h2><div id="sl"></div></div>
+<div class="card">
+<h2>الكأس المجهرية</h2>
+<canvas id="cv" width="340" height="300"></canvas>
+<p style="text-align:center;margin:8px 0 0"><button id="heat">🔥 سخّن الماء (ترسّب الكلس)</button> <button id="cool">❄ أعد التبريد</button></p>
+<p class="note" id="scl" style="text-align:center"></p>
+<div id="leg" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;font-size:.8rem"></div>
+</div>
+</div>
+
+<div class="card">
+<h2>النتائج</h2>
+<div class="k">
+<div><span id="tds">0</span><small>المعدنية الكلية TDS (ملغ/لتر)</small></div>
+<div><span id="th">0</span><small>العُسر الكلي (°f)</small></div>
+<div><span id="cls">-</span><small>التصنيف</small></div>
+</div>
+<p style="margin:10px 0 2px">توازن الشحنات (meq/L): الموجبة <b id="cat">0</b> — السالبة <b id="an">0</b></p>
+<div class="bar" id="bc"></div><div class="bar" id="ba"></div>
+<p class="note">العُسر °f = (Ca²⁺/4.008 + Mg²⁺/2.432) — أقل من 7 عذب جدًا، 7–15 يسر (ماء لين)، 15–30 متوسط العُسر، 30–40 عسر، أكثر من 40 عسر جدًا.</p>
+</div>
+
+<div class="card"><h2>لمن يصلح هذا الماء؟</h2><div id="who"></div>
+<p class="note">معلومات تثقيفية عامة وليست نصيحة طبية؛ لمرضى الكلى والقلب والضغط والرضّع يُستشار الطبيب.</p></div>
+
+<div class="card"><h2>فوائد الشوارد وتنبيهاتها</h2>
+<div class="wrapx"><table id="tb"></table></div></div>
+</div>
+
+<script>
+const ions=[
+{k:'Ca',n:'الكالسيوم Ca²⁺',c:'#1f77b4',w:20.04,z:1,max:600,ben:'بناء العظام والأسنان، تخثّر الدم، عمل العضلات والأعصاب.',wr:'الإفراط مع قلة الشرب قد يُسهم في ترسّب الحصى عند المهيَّئين لها؛ يسبّب العُسر وتكلّس الأجهزة.'},
+{k:'Mg',n:'المغنيسيوم Mg²⁺',c:'#2ca02c',w:12.15,z:1,max:150,ben:'عمل العضلات والأعصاب، الطاقة الخلوية، يخفّف التشنّجات والإجهاد.',wr:'مع الكبريتات بتركيز عالٍ قد يُحدث أثرًا مليّنًا.'},
+{k:'Na',n:'الصوديوم Na⁺',c:'#ff7f0e',w:22.99,z:1,max:600,ben:'توازن السوائل في الجسم ونقل السيالة العصبية.',wr:'يُحذَّر منه لمرضى الضغط والقلب والكلى وللرضّع.'},
+{k:'K',n:'البوتاسيوم K⁺',c:'#9467bd',w:39.1,z:1,max:50,ben:'ضبط ضربات القلب وضغط الدم وعمل العضلات.',wr:'تركيزه في المياه ضعيف عادة؛ يُحذَّر منه لمرضى الفشل الكلوي.'},
+{k:'HCO3',n:'البيكربونات HCO₃⁻',c:'#17becf',w:61.02,z:-1,max:1000,ben:'تعديل حموضة المعدة وتنظيم pH الدم، تعطي الماء طابعه القلوي.',wr:'مع الكالسيوم تسبّب العُسر المؤقت (يزول بالغليان) وترسّب الكلس.'},
+{k:'Cl',n:'الكلوريد Cl⁻',c:'#bcbd22',w:35.45,z:-1,max:500,ben:'مكوّن لحمض المعدة وتوازن السوائل.',wr:'بتركيز عالٍ يعطي طعمًا مالحًا ويسرّع تآكل الأنابيب.'},
+{k:'SO4',n:'الكبريتات SO₄²⁻',c:'#e377c2',w:48.03,z:-1,max:800,ben:'تنشيط الهضم وإفراز الصفراء بتركيز معتدل.',wr:'فوق 250 ملغ/لتر قد تُحدث إسهالًا خصوصًا مع المغنيسيوم.'},
+{k:'NO3',n:'النترات NO₃⁻',c:'#d62728',w:62.0,z:-1,max:80,ben:'لا فائدة غذائية منها في الماء.',wr:'ملوّث زراعي؛ الحد الأقصى 50 ملغ/لتر وهي خطر على الرضّع (زرقة الرضّع).'}
+];
+const P=[
+['مقطّر / منخفض المعدنية',{Ca:2,Mg:0.5,Na:2,K:0.5,HCO3:8,Cl:2,SO4:2,NO3:1}],
+['ماء الحنفية (متوسط)',{Ca:70,Mg:15,Na:40,K:3,HCO3:200,Cl:60,SO4:60,NO3:10}],
+['ماء الحنفية عسر',{Ca:140,Mg:35,Na:80,K:5,HCO3:300,Cl:130,SO4:150,NO3:15}],
+['معدني خفيف',{Ca:12,Mg:4,Na:6,K:1,HCO3:50,Cl:5,SO4:6,NO3:2}],
+['معدني متوازن',{Ca:78,Mg:24,Na:5,K:1,HCO3:360,Cl:5,SO4:10,NO3:4}],
+['معدني غني بالكالسيوم والكبريتات',{Ca:470,Mg:75,Na:9,K:3,HCO3:370,Cl:10,SO4:1190,NO3:3}],
+['معدني غازي مالح الطعم',{Ca:90,Mg:11,Na:1100,K:50,HCO3:2300,Cl:150,SO4:20,NO3:1}]
+];
+const v={};ions.forEach(i=>v[i.k]=0);
+const sl=document.getElementById('sl'),pre=document.getElementById('pre');
+ions.forEach(i=>{const d=document.createElement('div');d.className='sl';
+d.innerHTML=`<b><span class="dot" style="background:${i.c}"></span>${i.n.split(' ')[0]}</b><input type="range" id="r${i.k}" min="0" max="${i.max}" step="0.5"><span id="t${i.k}"></span>`;
+sl.appendChild(d);d.querySelector('input').oninput=e=>{v[i.k]=+e.target.value;upd(true)}});
+P.forEach((p,j)=>{const b=document.createElement('button');b.textContent=p[0];b.onclick=()=>{ions.forEach(i=>v[i.k]=Math.min(i.max,p[1][i.k]));[...pre.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');upd()};pre.appendChild(b)});
+document.getElementById('leg').innerHTML=ions.map(i=>`<span><span class="dot" style="background:${i.c}"></span> ${i.n.split(' ')[1]||i.n}</span>`).join('');
+document.getElementById('tb').innerHTML='<tr><th>الشاردة</th><th>الفائدة</th><th>تنبيه</th></tr>'+ions.map(i=>`<tr><td><b>${i.n}</b></td><td>${i.ben}</td><td>${i.wr}</td></tr>`).join('');
+
+let hot=false,scale=0,parts=[];
+const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+const gx=60,gy=30,gw=220,gh=240;
+function rebuild(){parts=[];ions.forEach(i=>{const n=Math.min(40,Math.round(Math.sqrt(v[i.k])*1.5));
+for(let q=0;q<n;q++)parts.push({c:i.c,z:i.z,x:gx+10+Math.random()*(gw-20),y:gy+10+Math.random()*(gh-20),vx:(Math.random()-.5)*1.2,vy:(Math.random()-.5)*1.2,r:i.z>0?4.5:6})})}
+function calc(){
+const Ca=v.Ca,Mg=v.Mg;
+const mCa=Ca/ions[0].w,mMg=Mg/ions[1].w;
+const th=(mCa+mMg)*5;
+const tds=ions.reduce((s,i)=>s+v[i.k],0);
+let cat=0,an=0;ions.forEach(i=>{const m=v[i.k]/i.w;i.z>0?cat+=m:an+=m});
+const dep=Math.min(Ca/40.08,v.HCO3/61.02/2)*100.09;
+return{th,tds,cat,an,dep}}
+function cls(h){return h<7?['عذب جدًا (يُسر)','#1a8f4d']:h<15?['يسر (لين)','#2e9bd1']:h<30?['متوسط العُسر','#c27a00']:h<40?['عسر','#d35400']:['عسر جدًا','#c0392b']}
+function upd(manual){
+if(manual)[...pre.children].forEach(x=>x.classList.remove('on'));
+ions.forEach(i=>{document.getElementById('r'+i.k).value=v[i.k];document.getElementById('t'+i.k).textContent=(+v[i.k]).toFixed(1)});
+const r=calc();
+tds.textContent=Math.round(r.tds);th.textContent=r.th.toFixed(1);
+const c=cls(r.th);cls_.innerHTML=`<span class="tag" style="background:${c[1]}">${c[0]}</span>`;
+cat.textContent=r.cat.toFixed(1);an.textContent=r.an.toFixed(1);
+const mx=Math.max(r.cat,r.an,.1);
+bc.innerHTML=ions.filter(i=>i.z>0).map(i=>`<i style="width:${v[i.k]/i.w/mx*100}%;background:${i.c}"></i>`).join('');
+ba.innerHTML=ions.filter(i=>i.z<0).map(i=>`<i style="width:${v[i.k]/i.w/mx*100}%;background:${i.c}"></i>`).join('');
+scl.textContent=hot?`بعد الغليان: يترسّب نحو ${r.dep.toFixed(0)} ملغ/لتر من كربونات الكالسيوم CaCO₃ (العُسر المؤقت).`:'اضغط «سخّن» لترى الكلس يترسّب عند الغليان.';
+who_(r);rebuild()}
+const $=id=>document.getElementById(id);
+const tds_=$('tds');
+function who_(r){
+const Na=v.Na,Ca=v.Ca,Mg=v.Mg,N=v.NO3,S=v.SO4,H=r.th,T=r.tds;
+const L=[];
+const add=(s,t,x)=>L.push(`<div class="row"><span class="ic">${s}</span><div><b>${t}</b><br>${x}</div></div>`);
+let s,m;
+if(N>50){s='⛔';m='النترات تتجاوز 50 ملغ/لتر: غير صالح للشرب خصوصًا للرضّع والحوامل.'}
+else if(T<=500&&N<25&&Na<20){s='✅';m='معدنية ضعيفة وصوديوم ونترات منخفضان: مناسب لتحضير حليب الرضّع (يُستشار الطبيب).'}
+else{s='⚠️';m='ليس الأفضل لتحضير حليب الرضّع: معدنية أو صوديوم أو نترات مرتفعة نسبيًا.'}
+add(s,'الرضّع والأطفال الصغار',m);
+add(Na<20?'✅':Na<=200?'⚠️':'⛔','مرضى الضغط والقلب (تقليل الملح)',Na<20?'صوديوم منخفض، مناسب.':Na<=200?'صوديوم متوسط؛ يُراقَب مع الغذاء.':'صوديوم مرتفع جدًا؛ يُتجنّب عادةً.');
+add(Ca>=100?'✅':Ca>=40?'🟡':'ℹ️','الحاجة إلى الكالسيوم (نمو، حمل، هشاشة العظام)',Ca>=100?'غني بالكالسيوم؛ مصدر مفيد يكمّل الغذاء.':Ca>=40?'كالسيوم معتدل.':'فقير بالكالسيوم؛ يُعوَّض بالغذاء.');
+add(Mg+Ca>40&&Mg>=10?'✅':'ℹ️','الرياضيون والتعرّق الشديد',Mg>=10&&T>200?'يحوي معادن (Mg وCa) تعوّض جزءًا مما يُفقد، وللأملاح الأخرى يُكمَّل بالغذاء.':'قليل المعادن؛ يُكمَّل بغذاء أو مشروب أملاح عند الحاجة.');
+add(Ca>200||T>1500?'⚠️':'✅','المهيَّؤون لحصى الكلى',Ca>200||T>1500?'تركيز عالٍ من الكالسيوم/المعادن: يُستشار الطبيب وتُراعى كمية الشرب.':'لا ما يمنع، والأهم شرب كمية كافية من الماء.');
+add(Mg>50&&S>250?'⚠️':'✅','المعدة والأمعاء',Mg>50&&S>250?'مغنيسيوم وكبريتات مرتفعان: أثر مليّن وقد يناسب الإمساك لا الاستعمال اليومي.':'لا أثر مليّن يُذكر.');
+add(H<15?'✅':H<30?'🟡':'⚠️','الاستعمال المنزلي (غلاية، غسالة، سخّان)',H<15?'يسر: قليل الكلس، يطيل عمر الأجهزة ويُرغي الصابون جيدًا.':H<30?'متوسط العُسر: كلس معتدل؛ يُنظَّف الجهاز دوريًا.':'عسر: ترسّب كلس كثير وصابون أقل رغوة؛ يُنصح بمُليِّن (مرشّح/ملطّف).');
+add(H<15?'✅':'🟡','الشاي والقهوة والبشرة الحسّاسة',H<15?'الماء اليسر يُظهر النكهة ولا يجفّف البشرة.':'العُسر يضعف النكهة وقد يجفّف البشرة والشعر.');
+who.innerHTML=L.join('')}
+const cls_=$('cls'),th=$('th'),cat=$('cat'),an=$('an'),bc=$('bc'),ba=$('ba'),scl=$('scl'),who=$('who');
+tds.id='tds';
+// rename safe refs
+const elTds=document.getElementById('tds');
+function loop(){
+cx.clearRect(0,0,340,300);
+cx.fillStyle='rgba(120,190,230,.25)';cx.fillRect(gx,gy,gw,gh);
+const dep=calc().dep;
+if(hot&&scale<1)scale+=.01;if(!hot&&scale>0)scale-=.03;
+if(scale>0){const hh=Math.min(40,dep/12)*Math.min(1,scale);cx.fillStyle='#e8e4da';cx.fillRect(gx,gy+gh-hh,gw,hh);
+if(hot&&scale<1){cx.fillStyle='rgba(255,255,255,.7)';for(let b=0;b<6;b++){cx.beginPath();cx.arc(gx+20+Math.random()*(gw-40),gy+gh-Math.random()*gh,2+Math.random()*3,0,7);cx.fill()}}}
+parts.forEach(p=>{p.x+=p.vx*(hot?2:1);p.y+=p.vy*(hot?2:1);
+if(p.x<gx+p.r||p.x>gx+gw-p.r)p.vx*=-1;if(p.y<gy+p.r||p.y>gy+gh-p.r-(scale>0?10:0))p.vy*=-1;
+cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fillStyle=p.c;cx.fill();
+cx.fillStyle='#fff';cx.font='bold 9px sans-serif';cx.textAlign='center';cx.fillText(p.z>0?'+':'−',p.x,p.y+3)});
+cx.strokeStyle='#6a8796';cx.lineWidth=4;cx.beginPath();cx.moveTo(gx,gy);cx.lineTo(gx,gy+gh);cx.lineTo(gx+gw,gy+gh);cx.lineTo(gx+gw,gy);cx.stroke();
+requestAnimationFrame(loop)}
+document.getElementById('heat').onclick=()=>{hot=true;upd()};
+document.getElementById('cool').onclick=()=>{hot=false;upd()};
+// fix tds element reference used in upd
+window.tds=elTds;
+P[1];pre.children[1].click();loop();
+</script>
+</body>
+</html>
